@@ -1,2 +1,11 @@
-﻿  Main.cpp
-  BasicOGLWindow.vcxproj -> C:\Users\quesenberry\source\repos\InteractiveGraphics\LabWeek5\x64\Debug\BasicOGLWindow.exe
+﻿  AbstractGraphicsObject.cpp
+  AbstractGraphicsSystem.cpp
+  AbstractGraphicsWindow.cpp
+  Main.cpp
+  OpenGLGraphicsObject.cpp
+  OpenGLGraphicsSystem.cpp
+  OpenGLGraphicsWindow.cpp
+  Generating Code...
+  glad.c
+MSVCRTD.lib(initializers.obj) : warning LNK4098: defaultlib 'msvcrt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
+  BasicOGLWindow.vcxproj -> C:\Users\QUESENBERRY\source\repos\InteractiveGraphics\LabWeek5\BasicOGLWindow\x64\Debug\BasicOGLWindow.exe
