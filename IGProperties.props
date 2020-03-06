@@ -3,8 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>;D:\InteractiveGraphics\OpenGL\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\InteractiveGraphics\OpenGL\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\QUESENBERRY\source\repos\InteractiveGraphics\include;D:\InteractiveGraphics\OpenGL\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\QUESENBERRY\source\repos\InteractiveGraphics\libs;D:\InteractiveGraphics\OpenGL\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
