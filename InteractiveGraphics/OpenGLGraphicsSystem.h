@@ -10,18 +10,17 @@
 class OpenGLGraphicsSystem :
    public AbstractGraphicsSystem
 {
+private:
+   void ProcessInput();
+
 public:
    OpenGLGraphicsSystem();
-   OpenGLGraphicsSystem(
-      OpenGLGraphicsWindow* window, BaseCamera* camera, GLSLGraphicsShader* shader);
+   OpenGLGraphicsSystem(OpenGLGraphicsWindow* window, GLSLGraphicsShader* shader);
    ~OpenGLGraphicsSystem();
    bool InitializeContext();
    void ShowWindow();
    void Setup();
    void Run();
-
-private:
-   void ProcessInput();
 };
 
 #endif

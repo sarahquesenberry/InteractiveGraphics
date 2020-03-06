@@ -28,10 +28,6 @@ public:
    virtual void SwapBuffers() = 0;
    virtual void Clear() = 0;
    virtual int GetKeyState(int key) = 0;
-   virtual void GetWindowSize() = 0;
-   virtual float GetAspectRatio() {
-      return _width / (float)_height;
-   }
 };
 
 #endif

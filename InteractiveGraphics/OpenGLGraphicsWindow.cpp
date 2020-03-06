@@ -55,19 +55,3 @@ int OpenGLGraphicsWindow::GetKeyState(int key)
 {
    return glfwGetKey(_window, key);
 }
-
-void OpenGLGraphicsWindow::GetWindowSize()
-{
-   glfwGetWindowSize(_window, &_width, &_height);
-}
-
-float OpenGLGraphicsWindow::GetAspectRatio()
-{
-   GetWindowSize();
-   return _width / (float)_height;
-}
-
-void OpenGLGraphicsWindow::OnResize(GLFWwindow* window, int width, int height)
-{
-   glViewport(0, 0, width, height);
-}

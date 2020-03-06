@@ -6,7 +6,6 @@
 #include "OpenGLGraphicsObject.h"
 #include "TextFileReader.h"
 #include "GraphicsObjectReader.h"
-#include "Generate.h"
 
 void ReportError(const string& error) 
 {
@@ -25,54 +24,44 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
    _In_ int       nCmdShow)
 {
    OpenGLGraphicsWindow* window = 
-      new OpenGLGraphicsWindow("Interactive Graphics Lec Week 7");
-   //window->backgroundColor = { 0.5f, 0.0f, 0.5f };
+      new OpenGLGraphicsWindow("Interactive Graphics Lab Week 6");
+   window->backgroundColor = { 0.0f, 0.0f, 0.0f };
 
-   OpenGLGraphicsObject* object = nullptr;
-   GraphicsObjectReader reader("cube.ig");
+  /*
+   OpenGLGraphicsObject* rectangle = nullptr;
+   GraphicsObjectReader reader("rectangle.ig");
    if (reader.Read()) {
-      object = reader.GetObject();
+      rectangle = reader.GetObject();
    }
    else {
       ReportError(reader.ReportErrors());
       return 0;
    }
+*/
+
+   OpenGLGraphicsObject* object = nullptr;
+   GraphicsObjectReader reader("object.ig");
+   if (reader.Read()) {
+       object = reader.GetObject();
+   }
+   else {
+       ReportError(reader.ReportErrors());
+       return 0;
+   }
 
    GLSLGraphicsShader* shader = 
       new GLSLGraphicsShader(new TextFileReader());
    if (!shader->ReadShaderSources(
-      "Simple3DVertexShader.glsl", "SimpleFragmentShader.glsl")) {
+      "SimpleVertexShader.glsl", "SimpleFragmentShader.glsl")) {
       ReportError(shader->ReportErrors());
       return 0;
    }
+   //rectangle->SetShader(shader);
    object->SetShader(shader);
 
-   auto camera = new BaseCamera();
-   camera->frame.SetPosition(2.0f, 1.0f, 7.0f);
-   AbstractGraphicsSystem* graphics = new OpenGLGraphicsSystem(window, camera, shader);
-
-   graphics->AddObject("Cube", object);
-   object = Generate::FlatSurface(10, 10, { 0.0f, 0.5f, 0.0f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("Floor", object);
-
-   auto cube = (OpenGLGraphicsObject*)graphics->GetObject("Cube");
-   cube->frame.Move({ 0.0f, 0.5f, 0.0f });
-
-   object = Generate::Cuboid(0.5f, 1, 1, { 0.5f, 0.5f, 0.0f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("C2", object);
-   object->frame.Move({ 3.0f, 0.5f, 0.0f });
-   auto c2 = (OpenGLGraphicsObject*)graphics->GetObject("C2");
-   c2->SetColor(0, 6, { 0.5f, 0.0f, 0.0f, 1.0f });
-
-   object = Generate::Cuboid(1, 2, 1, { 0.0f, 0.5f, 0.5f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("C3", object);
-   object->frame.Move({ 0.0f, 0.5f, 4.0f });
-   auto c3 = (OpenGLGraphicsObject*)graphics->GetObject("C3");
-   c3->SetColor(5, 6, { 0.0f, 0.0f, 0.5f, 1.0f });
-
+   AbstractGraphicsSystem* graphics = new OpenGLGraphicsSystem(window, shader);
+   //graphics->SetObject(rectangle);
+   graphics->SetObject(object);
    if (graphics->InitializeContext()) {
       graphics->ShowWindow();
       graphics->Setup();

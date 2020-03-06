@@ -2,7 +2,6 @@
 #ifndef ABSTRACT_GRAPHICS_OBJECT
 #define ABSTRACT_GRAPHICS_OBJECT
 #include "AbstractGraphicsShader.h"
-#include <glm/glm.hpp>
 
 class AbstractGraphicsObject
 {
