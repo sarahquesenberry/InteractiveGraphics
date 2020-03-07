@@ -100,3 +100,4 @@ OpenGLIndexedGraphicsObject* Generate::IndexedFlatSurface(float width, float dep
     flatSurface->AddIndex(3);
     return flatSurface;
 }
+

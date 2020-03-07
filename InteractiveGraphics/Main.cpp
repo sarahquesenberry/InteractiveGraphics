@@ -53,18 +53,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
    graphics->AddObject("Cube", object);
 
-   /*
-   object = Generate::FlatSurface(10, 10, { 0.0f, 0.5f, 0.0f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("Floor", object);
-    */
 
-   object = Generate::IndexedFlatSurface(10, 10, { 0.0f, 0.0f, 0.5f, 1.0f });
+   object = Generate::IndexedFlatSurface(50, 50, { 0.2f, 0.2f, 0.2f, 1.0f });
    object->SetShader(shader);
    graphics->AddObject("Floor", object);
 
-   auto cube = (OpenGLGraphicsObject*)graphics->GetObject("Cube");
-   cube->frame.Move({ 0.0f, 0.5f, 0.0f });
 
    object = Generate::Cuboid(0.5f, 1, 1, { 0.5f, 0.5f, 0.0f, 1.0f });
    object->SetShader(shader);
@@ -73,12 +66,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
    auto c2 = (OpenGLGraphicsObject*)graphics->GetObject("C2");
    c2->SetColor(0, 6, { 0.5f, 0.0f, 0.0f, 1.0f });
 
-   object = Generate::Cuboid(1, 2, 1, { 0.0f, 0.5f, 0.5f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("C3", object);
-   object->frame.Move({ 0.0f, 0.5f, 4.0f });
-   auto c3 = (OpenGLGraphicsObject*)graphics->GetObject("C3");
-   c3->SetColor(5, 6, { 0.0f, 0.0f, 0.5f, 1.0f });
 
    if (graphics->InitializeContext()) {
       graphics->ShowWindow();

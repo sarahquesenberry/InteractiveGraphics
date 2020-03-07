@@ -186,12 +186,11 @@
     <ClInclude Include="TextFileReader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cube.ig" />
-    <None Include="object.ig" />
-    <None Include="rectangle.ig" />
+    <None Include="gun.ig" />
     <None Include="Simple3DVertexShader.glsl" />
     <None Include="SimpleFragmentShader.glsl" />
     <None Include="SimpleVertexShader.glsl" />
+    <None Include="wallpanel.ig" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
