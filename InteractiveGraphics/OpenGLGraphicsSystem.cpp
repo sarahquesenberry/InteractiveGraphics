@@ -6,6 +6,7 @@
 #include <sstream>
 #include <glm/gtc/matrix_transform.hpp>
 #include "OpenGLGraphicsObject.h"
+#include "OpenGLVertexPCTStrategy.h"
 
 OpenGLGraphicsSystem::OpenGLGraphicsSystem() :
    AbstractGraphicsSystem()
@@ -14,8 +15,8 @@ OpenGLGraphicsSystem::OpenGLGraphicsSystem() :
 }
 
 OpenGLGraphicsSystem::OpenGLGraphicsSystem(
-   OpenGLGraphicsWindow* window, BaseCamera* camera, GLSLGraphicsShader* shader) :
-   AbstractGraphicsSystem(window, camera, shader)
+   OpenGLGraphicsWindow* window, BaseCamera* camera, AbstractTimer* timer) :
+   AbstractGraphicsSystem(window, camera, timer)
 {
 }
 
@@ -39,16 +40,15 @@ bool OpenGLGraphicsSystem::InitializeContext()
       _errorReport = "Failed to initialize GLAD\n";
       return false;
    }
-   if (_shader != nullptr) {
-      if (!_shader->Create()) {
-         _errorReport = _shader->ReportErrors();
-         return false;
+   bool shaderNotCreated = false;
+   for (auto shaderIter = _shaders.begin(); shaderIter != _shaders.end(); shaderIter++) {
+      auto shader = shaderIter->second;
+      if (!shader->Create()) {
+         _errorReport += shader->ReportErrors();
+         shaderNotCreated = true;
       }
    }
-   else {
-      _errorReport = "A shader was not created.\n";
-      return false;
-   }
+   if (shaderNotCreated) return false;
    return true;
 }
 
@@ -60,7 +60,17 @@ void OpenGLGraphicsSystem::ShowWindow()
 
 void OpenGLGraphicsSystem::Setup()
 {
+   // Cull back faces and use counter-clockwise winding of front faces
+   glEnable(GL_CULL_FACE);
+   glCullFace(GL_BACK);
+   glFrontFace(GL_CCW);
+
+   // Enable depth testing
    glEnable(GL_DEPTH_TEST);
+   glDepthMask(GL_TRUE);
+   glDepthFunc(GL_LEQUAL);
+   glDepthRange(0.0f, 1.0f);
+
    for (auto iterator = _objects.begin(); iterator != _objects.end(); iterator++) {
       iterator->second->Setup();
    }
@@ -68,16 +78,41 @@ void OpenGLGraphicsSystem::Setup()
 
 void OpenGLGraphicsSystem::Run()
 {
-   auto shader = (GLSLGraphicsShader*)_shader;
+   float S = 0;
+   double elapsedSeconds;
+   _timer->StartTiming();
    while (!_window->IsTimeToClose()) {
+      elapsedSeconds = _timer->GetElapsedTimeInSeconds();
       ProcessInput();
-
-      _camera->SetupProjectionAndView(_window->GetAspectRatio());
+      
       _camera->SetupLookingForward();
-      shader->projection = _camera->GetProjection();
-      shader->view = _camera->GetView();
+      _camera->SetupProjectionAndView(_window->GetAspectRatio());
+      for (auto shaderIter = _shaders.begin(); shaderIter != _shaders.end(); shaderIter++) {
+         auto shader = (GLSLGraphicsShader*)shaderIter->second;
+         shader->projection = _camera->GetProjection();
+         shader->view = _camera->GetView();
+      }
+      
+      auto strategy = (OpenGLVertexPCTStrategy*)_objects["sky"]->vertexStrategy;
+      strategy->SetTextureCoord(0, S, 1.0f);
+      strategy->SetTextureCoord(1, S, 0.0f);
+      strategy->SetTextureCoord(2, 1.0f + S, 0.0f);
+      strategy->SetTextureCoord(3, S, 1.0f);
+      strategy->SetTextureCoord(4, 1.0f + S, 0.0f);
+      strategy->SetTextureCoord(5, 1.0f + S, 1.0f);
+      strategy->SelectVAO();
+      strategy->SetupBuffer();
+      S += (float)(0.05f * elapsedSeconds);
+      if (S > 1.0f) S = 0;
 
+
+      _camera->Update(elapsedSeconds);
       _window->Clear();
+
+      for (auto iterator = _objects.begin(); iterator != _objects.end(); iterator++) {
+          iterator->second->Update(elapsedSeconds);
+      }
+
       for (auto iterator = _objects.begin(); iterator != _objects.end(); iterator++) {
          iterator->second->Render();
       }
@@ -118,40 +153,39 @@ void OpenGLGraphicsSystem::ProcessInput()
 
    if (_window->GetKeyState(GLFW_KEY_D) == GLFW_PRESS) {
       if (_window->GetKeyState(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-         auto right = _camera->frame.GetXAxis();
-         right *= 0.05f;
-         _camera->frame.Move(right);
+         _camera->SetState(BaseCamera::CameraState::MovingRight);
       }
       else {
-         _camera->frame.Rotate(-1, _camera->frame.GetYAxis());
+         _camera->SetState(BaseCamera::CameraState::TurningRight);
       }
+      return;
    }
    if (_window->GetKeyState(GLFW_KEY_A) == GLFW_PRESS) {
       if (_window->GetKeyState(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-         auto left = -_camera->frame.GetXAxis();
-         left *= 0.05f;
-         _camera->frame.Move(left);
+         _camera->SetState(BaseCamera::CameraState::MovingLeft);
       }
       else {
-         _camera->frame.Rotate(1, _camera->frame.GetYAxis());
+         _camera->SetState(BaseCamera::CameraState::TurningLeft);
       }
+      return;
    }
    if (_window->GetKeyState(GLFW_KEY_W) == GLFW_PRESS) {
-      auto forward = -_camera->frame.GetZAxis();
-      forward *= 0.05f;
-      _camera->frame.Move(forward);
+      _camera->SetState(BaseCamera::CameraState::MovingForward);
+      return;
    }
    if (_window->GetKeyState(GLFW_KEY_S) == GLFW_PRESS) {
-      auto backward = _camera->frame.GetZAxis();
-      backward *= 0.05f;
-      _camera->frame.Move(backward);
+      _camera->SetState(BaseCamera::CameraState::MovingBackward);
+      return;
    }
    if (_window->GetKeyState(GLFW_KEY_UP) == GLFW_PRESS) {
-      _camera->frame.Move({ 0, 0.01f, 0 });
+      _camera->SetState(BaseCamera::CameraState::MovingUp);
+      return;
    }
    if (_window->GetKeyState(GLFW_KEY_DOWN) == GLFW_PRESS) {
-      _camera->frame.Move({ 0, -0.01f, 0 });
+      _camera->SetState(BaseCamera::CameraState::MovingDown);
+      return;
    }
+   _camera->SetState(BaseCamera::CameraState::NotMoving);
 
 }
 

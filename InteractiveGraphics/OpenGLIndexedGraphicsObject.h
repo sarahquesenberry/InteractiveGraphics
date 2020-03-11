@@ -1,30 +1,24 @@
 #pragma once
 #ifndef OPENGL_INDEXED_GRAPHICS_OBJECT
 #define OPENGL_INDEXED_GRAPHICS_OBJECT
-
-
-
 #include "OpenGLGraphicsObject.h"
+
 class OpenGLIndexedGraphicsObject :
-	public OpenGLGraphicsObject
+   public OpenGLGraphicsObject
 {
 protected:
-	GLuint _indexVbo;
-	vector<unsigned int> _indexes;
+   GLuint _indexVbo;
 
 public:
-	OpenGLIndexedGraphicsObject();
-	OpenGLIndexedGraphicsObject(AbstractGraphicsShader* shader);
-
-
-	void AddIndex(unsigned int index) { _indexes.push_back(index); }
-
-
-	void Setup();
-	void Render();
-
-
-
+   OpenGLIndexedGraphicsObject() :
+      OpenGLGraphicsObject(), _indexVbo(0)
+   {}
+   OpenGLIndexedGraphicsObject(AbstractGraphicsShader* shader) :
+      OpenGLGraphicsObject(shader), _indexVbo(0)
+   {}
+   void Setup();
+   void Render();
 };
 
 #endif
+

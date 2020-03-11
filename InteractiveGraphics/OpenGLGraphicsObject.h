@@ -12,23 +12,22 @@ using std::vector;
 class OpenGLGraphicsObject :
    public AbstractGraphicsObject
 {
-protected:
-   GLuint _vaoId, _vboId;
-   vector<Vertex> _vertices;
+//protected:
+//   GLuint _vaoId, _vboId;
 
-public:
-   ReferenceFrame frame;
+//public:
+    //ReferenceFrame frame;
 
 public:
    OpenGLGraphicsObject() : 
-      _vaoId(0), _vboId(0), frame()
+      AbstractGraphicsObject()
    {}
-   OpenGLGraphicsObject(AbstractGraphicsShader* shader) : 
-      AbstractGraphicsObject(shader), _vaoId(0), _vboId(0), frame()
+   OpenGLGraphicsObject(
+      AbstractGraphicsShader* shader,
+      AbstractTexture* texture = nullptr) :
+      AbstractGraphicsObject(shader, texture)
    {}
    ~OpenGLGraphicsObject();
-   void AddVertex(const Vertex& vertex) { _vertices.push_back(vertex); }
-   void SetColor(int facet, int numberOfVertices, RGBA color);
    void Setup();
    void Render();
 };

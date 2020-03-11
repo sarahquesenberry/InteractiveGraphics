@@ -7,34 +7,40 @@ using std::map;
 #include "AbstractGraphicsObject.h"
 #include "AbstractGraphicsShader.h"
 #include "BaseCamera.h"
+#include "AbstractTimer.h"
 
 class AbstractGraphicsSystem
 {
 protected:
    AbstractGraphicsWindow* _window;
    BaseCamera* _camera;
-   AbstractGraphicsShader* _shader;
+   AbstractTimer* _timer;
+   map<string, AbstractGraphicsShader*> _shaders;
    map<string, AbstractGraphicsObject*> _objects;
+   map<string, AbstractTexture*> _textures;
    string _errorReport;
 
 public:
    AbstractGraphicsSystem() : 
-      _window(nullptr), _camera(new BaseCamera()), _shader(nullptr), 
+      _window(nullptr), _camera(new BaseCamera()), _timer(nullptr),
       _errorReport(""){}
    AbstractGraphicsSystem(
-      AbstractGraphicsWindow* window, BaseCamera* camera, AbstractGraphicsShader* shader) :
-      _window(window), _camera(camera), _shader(shader),
+      AbstractGraphicsWindow* window, BaseCamera* camera, AbstractTimer* timer) :
+      _window(window), _camera(camera), _timer(timer),
       _errorReport(""){}
    virtual ~AbstractGraphicsSystem();
 
    string ReportErrors() { return _errorReport; }
-   virtual void AddObject(const string& objectName, AbstractGraphicsObject* object) {
-      _objects[objectName] = object;
-   }
-   virtual AbstractGraphicsObject* GetObject(const string& objectName) {
+   virtual void AddObject(const string& objectName, AbstractGraphicsObject* object, const string& shaderName);
+   virtual void RemoveObject(const string& objectName);
+   virtual AbstractGraphicsObject* GetGraphicsObject(const string& objectName) {
       return _objects[objectName];
    }
-   virtual void SetShader(AbstractGraphicsShader* shader) { _shader = shader; }
+   virtual void AddShader(string shaderName, AbstractGraphicsShader* shader);
+   virtual void AddTexture(string textureName, AbstractTexture* texture);
+   virtual AbstractTexture* GetTexture(const string& textureName) {
+      return _textures[textureName];
+   }
    virtual bool InitializeContext() = 0;
    virtual void ShowWindow() = 0;
    virtual void Setup() = 0;
