@@ -7,6 +7,11 @@
 #include "TextFileReader.h"
 #include "GraphicsObjectReader.h"
 #include "Generate.h"
+#include "HighResolutionTimer.h"
+#include "OpenGLVertexPCStrategy.h"
+#include "OpenGLTexture.h"
+#include "RotateAnimation.h"
+#include "BaseGraphicsScene.h"
 
 void ReportError(const string& error) 
 {
@@ -25,69 +30,143 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
    _In_ int       nCmdShow)
 {
    OpenGLGraphicsWindow* window = 
-      new OpenGLGraphicsWindow("Interactive Graphics Lab Week 6");
-   window->backgroundColor = { 0.5f, 0.0f, 0.5f };
-
-   OpenGLGraphicsObject* rectangle = nullptr;
-   GraphicsObjectReader reader("rectangle.ig");
-   if (reader.Read()) {
-      rectangle = reader.GetObject();
-   }
-   else {
-      ReportError(reader.ReportErrors());
-      return 0;
-   }
-
-   GLSLGraphicsShader* shader = 
-      new GLSLGraphicsShader(new TextFileReader());
-   if (!shader->ReadShaderSources(
-      "SimpleVertexShader.glsl", "SimpleFragmentShader.glsl")) {
-      ReportError(shader->ReportErrors());
-      return 0;
-   }
-<<<<<<< Updated upstream
-   rectangle->SetShader(shader);
-
-   AbstractGraphicsSystem* graphics = new OpenGLGraphicsSystem(window, shader);
-   graphics->SetObject(rectangle);
-=======
-   object->SetShader(shader);
-
+      new OpenGLGraphicsWindow("Interactive Graphics Lec Week 10");
+   auto timer = new HighResolutionTimer();
    auto camera = new BaseCamera();
-   camera->frame.SetPosition(0.0f, 1.0f, 7.0f);
-   AbstractGraphicsSystem* graphics = new OpenGLGraphicsSystem(window, camera, shader);
+   AbstractGraphicsSystem* graphics = new OpenGLGraphicsSystem(window, camera, timer);
+   graphics->scene = new BaseGraphicsScene(camera);
+   graphics->scene->globalLight.intensity = 0.05f;
+   graphics->scene->localLight.color = { 1, 1, 1 };
+   graphics->scene->localLight.intensity = 0.7f;
+   graphics->scene->localLight.attenuationCoefficient = 0.9f;
 
-   graphics->AddObject("Cube", object);
+   // Load the shaders
+   GLSLGraphicsShader* simple3DShader = new GLSLGraphicsShader(new TextFileReader());
+   if (!simple3DShader->ReadShaderSources(
+      "Simple3DVertexShader.glsl", "SimpleFragmentShader.glsl")) {
+      ReportError(simple3DShader->ReportErrors());
+      return 0;
+   }
+   GLSLGraphicsShader* simplePCTShader = new GLSLGraphicsShader(new TextFileReader());
+   if (!simplePCTShader->ReadShaderSources(
+      "VSPositionColorTexture.glsl", "FSPositionColorTexture.glsl")) {
+      ReportError(simplePCTShader->ReportErrors());
+      return 0;
+   }
+   GLSLGraphicsShader* ambientLightShader = new GLSLGraphicsShader(new TextFileReader());
+   if (!ambientLightShader->ReadShaderSources(
+      "VSPositionColorTexture.glsl", "FSPCTAmbientLight.glsl")) {
+      ReportError(ambientLightShader->ReportErrors());
+      return 0;
+   }
+   GLSLGraphicsShader* globalLightShader = new GLSLGraphicsShader(new TextFileReader());
+   if (!globalLightShader->ReadShaderSources(
+      "VSPCNTLighting.glsl", "FSPCNTLight.glsl")) {
+      ReportError(globalLightShader->ReportErrors());
+      return 0;
+   }
+   GLSLGraphicsShader* localLightShader = new GLSLGraphicsShader(new TextFileReader());
+   if (!localLightShader->ReadShaderSources(
+      "VSPCNTLighting.glsl", "FSPCNTLocalLight.glsl")) {
+      ReportError(localLightShader->ReportErrors());
+      return 0;
+   }
+   GLSLGraphicsShader* lightingShader = new GLSLGraphicsShader(new TextFileReader());
+   if (!lightingShader->ReadShaderSources(
+      "VSPCNTLighting.glsl", "FSPCNTLighting.glsl")) {
+      ReportError(lightingShader->ReportErrors());
+      return 0;
+   }
 
-   object = Generate::FlatSurface(10, 10, { 0.0f, 0.5f, 0.0f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("Floor", object);
+   graphics->AddShader("Simple3DShader", simple3DShader);
+   graphics->AddShader("SimplePCTShader", simplePCTShader);
+   graphics->AddShader("AmbientLightShader", ambientLightShader);
+   graphics->AddShader("GlobalLightShader", globalLightShader);
+   graphics->AddShader("LocalLightShader", localLightShader);
+   graphics->AddShader("LightingShader", lightingShader);
 
+   GLSLGraphicsShader* currentShader = lightingShader;
 
-   object = Generate::Cuboid(1, 2, 1.5, { 0.50f, 0.50f, 0.0f, 1.0f });
-    object->SetColor(0, 6, { 1.0f, 0.0f, 0.0f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("Cuboid1", object);
+   OpenGLTexture* wallTexture = new OpenGLTexture();
+   wallTexture->LoadFromFile("brickwall.jpg");
+   wallTexture->SetMagFilter(GL_LINEAR);
+   wallTexture->SetMinFilter(GL_LINEAR);
+   graphics->AddTexture("brickwall", wallTexture);
 
-   object = Generate::Cuboid(0.5, 1.4, 1.0, { 0.0f, 0.50f, 0.50f, 1.0f });
-   object->SetColor(4, 6, { 0.0f, 0.0f, 1.0f, 1.0f });
-   object->SetShader(shader);
-   graphics->AddObject("Cuboid2", object);
+   OpenGLGraphicsObject* wall = Generate::Cuboid("NormalizedTextured", 10, 1, 10, { 1.0f, 1.0f, 1.0f, 1.0f }, 5.0f, 5.0f);
+   wall->SetTexture(wallTexture);
+   graphics->scene->AddObject("wall", wall, currentShader);
+   wall->frame.Move({ 0.0f, 5.0f, -5.0f });
 
+   OpenGLTexture* crateTexture = new OpenGLTexture();
+   crateTexture->LoadFromFile("crate.jpg");
+   graphics->AddTexture("crate", crateTexture);
 
+   OpenGLTexture* metalTexture = new OpenGLTexture();
+   metalTexture->LoadFromFile("metal.jpg");
+   graphics->AddTexture("metal", metalTexture);
 
+   OpenGLGraphicsObject* crate1 = Generate::Cuboid("NormalizedTextured", 2, 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f });
+   crate1->SetTexture(metalTexture);
+   graphics->scene->AddObject("crate1", crate1, currentShader);
+   crate1->frame.Move({ -3.0f, 1.0f, 0.0f });
 
-   auto cube = (OpenGLGraphicsObject*)graphics->GetObject("Cube");
-   cube->frame.Move({ 0.0f, 0.5f, 0.0f });
+   OpenGLGraphicsObject* crate2 = Generate::Cuboid("NormalizedTextured", 2, 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f });
+   crate2->SetTexture(crateTexture);
+   graphics->scene->AddObject("crate2", crate2, currentShader);
+   crate2->frame.Move({ 0.0f, 1.0f, 0.0f });
 
-   auto cuboid1 = (OpenGLGraphicsObject*)graphics->GetObject("Cuboid1");
-   cuboid1->frame.Move({ 1.5f, 0.5f, 1.5f });
+   OpenGLGraphicsObject* crate3 = Generate::Cuboid("NormalizedTextured", 2, 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f });
+   crate3->SetTexture(metalTexture);
+   graphics->scene->AddObject("crate3", crate3, currentShader);
+   crate3->frame.Move({ 3.0f, 1.0f, 0.0f });
 
-   auto cuboid2 = (OpenGLGraphicsObject*)graphics->GetObject("Cuboid2");
-   cuboid2->frame.Move({ -1.5f, 0.5f, 2.5f });
+   OpenGLGraphicsObject* crate4 = Generate::Cuboid("NormalizedTextured", 2, 2, 2, { 1.0f, 1.0f, 1.0f, 1.0f });
+   crate4->SetTexture(crateTexture);
+   graphics->scene->AddObject("crate4", crate4, currentShader);
+   crate4->frame.Move({ 0.0f, 7.0f, -3.0f });
 
+   auto rotateAnimation1 = new RotateAnimation(30);
+   graphics->AddAnimation("RotateAnimation1", rotateAnimation1);
+   auto rotateAnimation2 = new RotateAnimation(60);
+   graphics->AddAnimation("RotateAnimation2", rotateAnimation2);
+   auto rotateAnimation3 = new RotateAnimation(90);
+   graphics->AddAnimation("RotateAnimation3", rotateAnimation3);
+   auto rotateAnimation4 = new RotateAnimation(15);
+   graphics->AddAnimation("RotateAnimation4", rotateAnimation4);
 
->>>>>>> Stashed changes
+   graphics->scene->SetObjectsAnimation("crate1", rotateAnimation1);
+   graphics->scene->SetObjectsAnimation("crate2", rotateAnimation2);
+   graphics->scene->SetObjectsAnimation("crate3", rotateAnimation3);
+   graphics->scene->SetObjectsAnimation("crate4", rotateAnimation4);
+
+   OpenGLTexture* floorTexture = new OpenGLTexture();
+   floorTexture->LoadFromFile("marble-stone-floor.jpg");
+   floorTexture->SetMagFilter(GL_LINEAR);
+   floorTexture->SetMinFilter(GL_LINEAR);
+   graphics->AddTexture("marbleFloor", floorTexture);
+
+   OpenGLGraphicsObject* floor = Generate::FlatSurface("NormalizedTextured", 50, 50, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 50.0f);
+   floor->SetTexture(floorTexture);
+   graphics->scene->AddObject("floor", floor, currentShader);
+
+   OpenGLTexture* skyTexture = new OpenGLTexture();
+   skyTexture->LoadFromFile("sky.jpg");
+   skyTexture->SetMagFilter(GL_LINEAR);
+   skyTexture->SetMinFilter(GL_LINEAR);
+   graphics->AddTexture("sky", skyTexture);
+
+   OpenGLGraphicsObject* sky = Generate::TexturedFlatSurface(100, 100, { 1.0f, 1.0f, 1.0f, 1.0f }, 1, 1);
+   sky->SetTexture(skyTexture);
+   graphics->scene->AddObject("sky", sky, simplePCTShader);
+   sky->frame.Move({ 0.0f, 15.0f, 0.0f });
+   sky->frame.Rotate(180.0f, wall->frame.GetXAxis());
+
+   OpenGLGraphicsObject* cube = Generate::Cuboid(0.1f, 0.1f, 0.1f, { 1.0f, 1.0f, 1.0f, 1.0f });
+   graphics->scene->AddObject("cube", cube, simple3DShader);
+   cube->frame.Move({ 0.0f, 0.5f, 3.5f });
+   graphics->scene->localLight.position = { 0.0f, 0.5f, 3.5f };
+
    if (graphics->InitializeContext()) {
       graphics->ShowWindow();
       graphics->Setup();
